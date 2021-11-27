@@ -6,7 +6,13 @@ import { Post } from './post.interface';
 @Injectable()
 export default class PostsService {
   private lastPostId = 0;
-  private posts: Post[] = [];
+  private posts: Post[] = [
+    {
+      id: 1,
+      title: 'Title One',
+      content: 'This is the first post',
+    },
+  ];
 
   getAllPosts(): Post[] {
     return this.posts;
@@ -29,7 +35,7 @@ export default class PostsService {
     throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
   }
 
-  createPost(post: CreatePostDto) {
+  createPost(post: CreatePostDto): Post {
     const newPost = {
       id: ++this.lastPostId,
       ...post,
@@ -38,7 +44,7 @@ export default class PostsService {
     return newPost;
   }
 
-  deletePost(id: number) {
+  deletePost(id: number): any {
     const postIdx = this.posts.findIndex((post) => post.id === id);
     if (postIdx > -1) {
       this.posts.splice(postIdx, 1);
