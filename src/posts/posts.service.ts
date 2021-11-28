@@ -22,43 +22,78 @@ export default class PostsService {
     },
   ];
 
-  getAllPosts(): Post[] {
-    return this.posts;
-  }
-
-  getPostById(id: number): Post {
-    const post = this.posts.find((post) => post.id === id);
-    if (post) {
-      return post;
+  async getAllPosts(): Promise<Post[]> {
+    try {
+      return await this.postRepository.find();
+    } catch (err) {
+      console.error(err);
+      throw new HttpException(
+        'Cannot find posts',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
-    throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
   }
 
-  replacePost(id: number, post: UpdatePostDto): Post {
-    const postIdx = this.posts.findIndex((post) => post.id === id);
-    if (postIdx > -1) {
-      this.posts[postIdx] = post;
-      return post;
-    }
-    throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
-  }
-
-  createPost(post: CreatePostDto): Post {
-    const newPost = {
-      id: ++this.lastPostId,
-      ...post,
-    };
-    this.posts.push(newPost);
-    return newPost;
-  }
-
-  deletePost(id: number): any {
-    const postIdx = this.posts.findIndex((post) => post.id === id);
-    if (postIdx > -1) {
-      this.posts.splice(postIdx, 1);
-    } else {
+  async getPostById(id: number): Promise<Post> {
+    try {
+      const post = await this.postRepository.findOne(id);
+      if (post) {
+        return post;
+      }
       throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
+    } catch (err) {
+      console.error(err);
+      throw new HttpException(
+        'Cannot find post with id',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
-    return;
+  }
+
+  async updatePost(id: number, post: UpdatePostDto): Promise<Post> {
+    try {
+      await this.postRepository.update(id, post);
+      const updatedPost = await this.postRepository.findOne(id);
+      if (updatedPost) {
+        return updatedPost;
+      }
+      throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
+    } catch (error) {
+      console.error(error);
+      throw new HttpException(
+        'Cannot update post',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async createPost(post: CreatePostDto): Promise<Post> {
+    try {
+      const newPost = await this.postRepository.create(post);
+      await this.postRepository.save(newPost);
+      return newPost;
+    } catch (err) {
+      console.error(err);
+      throw new HttpException(
+        'Cannot create new post',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async deletePost(id: number): Promise<any> {
+    try {
+      const deleteResponse = await this.postRepository.delete(id);
+      if (!deleteResponse.affected) {
+        throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
+      }
+      return;
+    } catch (err) {
+      console.error(err);
+      throw new HttpException(
+        'Cannot delete post',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }
