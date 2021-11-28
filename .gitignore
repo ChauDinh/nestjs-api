@@ -396,3 +396,6 @@ Temporary Items
 # Local
 .env
 dist
+
+# Docker environment
+docker.env
